@@ -38,6 +38,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - name: unpack
+        if: ${{ !cancelled() }}
         env:
           TRIAL_SEAL_KEY: ${{ secrets.TRIAL_SEAL_KEY }}
         run: |
@@ -45,6 +46,6 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:/tmp/seal.key -in .ci/suite.enc \
             | tar -xz
           shred -u /tmp/seal.key 2>/dev/null || rm -f /tmp/seal.key
-          unset TRIAL_SEAL_KEY
       - name: rest
+        if: ${{ !cancelled() }}
         run: npx vitest run --config vitest.full.config.ts
