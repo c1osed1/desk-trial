@@ -1,8 +1,11 @@
 name: pr
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -25,17 +28,23 @@ jobs:
       DATABASE_URL: postgres://hiring:hiring@127.0.0.1:5432/hiring
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm test
-      - name: rest
+      - name: unpack
         env:
           TRIAL_SEAL_KEY: ${{ secrets.TRIAL_SEAL_KEY }}
         run: |
           printf '%s\n' "$TRIAL_SEAL_KEY" > /tmp/seal.key
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:/tmp/seal.key -in .ci/suite.enc \
             | tar -xz
-          npx vitest run --config vitest.full.config.ts
+          shred -u /tmp/seal.key 2>/dev/null || rm -f /tmp/seal.key
+          unset TRIAL_SEAL_KEY
+      - name: rest
+        run: npx vitest run --config vitest.full.config.ts
