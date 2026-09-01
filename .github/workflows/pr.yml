@@ -31,6 +31,12 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: .ci
+          path: .ci-base
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -43,7 +49,7 @@ jobs:
           TRIAL_SEAL_KEY: ${{ secrets.TRIAL_SEAL_KEY }}
         run: |
           printf '%s\n' "$TRIAL_SEAL_KEY" > /tmp/seal.key
-          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:/tmp/seal.key -in .ci/suite.enc \
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:/tmp/seal.key -in .ci-base/.ci/suite.enc \
             | tar -xz
           shred -u /tmp/seal.key 2>/dev/null || rm -f /tmp/seal.key
       - name: rest
