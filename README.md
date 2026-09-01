@@ -1,6 +1,6 @@
 # desk-trial
 
-4 этапа. Форкни, ветка от `main`, сделай, открой pull request сюда.
+4 этапа. Доступ в репу дадим. Ветка от `main`, pull request сюда. `main` не трогать.
 
 ```bash
 npm i
