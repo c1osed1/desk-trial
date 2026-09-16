@@ -1,23 +1,42 @@
-import type { IdempotencyBegin } from './types.ts';
+import { IdempotencyError, type IdempotencyBegin } from './types.ts';
 import type { RedisLike } from './redisLike.ts';
 
 export class IdempotencyStore<T> {
+  private readonly redis: RedisLike;
+  private readonly ttlSec: number;
+
   constructor(
-    _redis: RedisLike,
-    _ttlSec: number,
+    redis: RedisLike,
+    ttlSec: number,
   ) {
-    throw new Error('TODO: implement IdempotencyStore');
+    this.redis = redis;
+    this.ttlSec = ttlSec;
   }
 
-  async begin(_key: string): Promise<IdempotencyBegin<T>> {
-    throw new Error('TODO: implement begin');
+  private lockKey(key: string): string {
+    return `idem:${key}:lock`;
   }
 
-  async commit(_key: string, _value: T): Promise<void> {
-    throw new Error('TODO: implement commit');
+  private resultKey(key: string): string {
+    return `idem:${key}:res`;
   }
 
-  async fail(_key: string): Promise<void> {
-    throw new Error('TODO: implement fail');
+  async begin(key: string): Promise<IdempotencyBegin<T>> {
+    const raw = await this.redis.get(this.resultKey(key));
+    if (raw != null) {
+      return { kind: 'replay', value: JSON.parse(raw) as T };
+    }
+    const acquired = await this.redis.setNxEx(this.lockKey(key), '1', this.ttlSec);
+    if (!acquired) throw new IdempotencyError();
+    return { kind: 'new' };
+  }
+
+  async commit(key: string, value: T): Promise<void> {
+    await this.redis.setEx(this.resultKey(key), JSON.stringify(value), this.ttlSec);
+    await this.redis.del(this.lockKey(key));
+  }
+
+  async fail(key: string): Promise<void> {
+    await this.redis.del(this.lockKey(key));
   }
 }

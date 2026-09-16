@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyError, FastifyInstance } from 'fastify';
 import { createTicketSchema, staffIdBodySchema, ticketStatusQuerySchema } from './schema.ts';
 import { AppError } from './errors.ts';
 import type { TicketService } from './service.ts';
@@ -15,7 +15,7 @@ export async function registerTicketHandlers(app: FastifyInstance, service: Tick
     return reply.status(404).send({ code: 'not_found', message: 'Route not found' });
   });
 
-  app.setErrorHandler((error, _request, reply) => {
+  app.setErrorHandler((error: FastifyError, _request, reply) => {
     if (error instanceof AppError) {
       return reply.status(STATUS_CODES[error.code] ?? 500).send({ code: error.code, message: error.message });
     }
