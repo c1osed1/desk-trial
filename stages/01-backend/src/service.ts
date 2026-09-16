@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { createTicketSchema } from './schema.ts';
 import { createMemoryRepo, nowIso } from './memoryRepo.ts';
 import { AppError } from './errors.ts';
 import type { Ticket, TicketRepo, TicketStatus } from './types.ts';
@@ -6,8 +7,10 @@ import type { Ticket, TicketRepo, TicketStatus } from './types.ts';
 export class TicketService {
   constructor(private readonly repo: TicketRepo) {}
 
-async create(input: unknown): Promise<Ticket> {
-    const data = input as { clubId: string; type: string; priority?: number; comment?: string };
+  async create(input: unknown): Promise<Ticket> {
+    const parsed = createTicketSchema.safeParse(input);
+    if (!parsed.success) throw new AppError('validation', 'Invalid ticket data');
+    const data = parsed.data;
 
     const rawComment = data.comment ?? null;
     const comment =

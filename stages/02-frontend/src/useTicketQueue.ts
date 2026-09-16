@@ -31,9 +31,9 @@ export function useTicketQueue(api: TicketApi): TicketQueueState {
         setTickets(list);
         setStatus('ready');
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (cancelled) return;
-        setErrorMessage('Не удалось загрузить очередь');
+        setErrorMessage(err instanceof Error ? err.message : 'Ошибка загрузки');
         setStatus('error');
       });
     return () => {
@@ -53,8 +53,8 @@ export function useTicketQueue(api: TicketApi): TicketQueueState {
       try {
         const updated = await api.assign(ticketId);
         setTickets((prev) => prev.map((t) => (t.id === ticketId ? updated : t)));
-      } catch {
-        setActionError('Не удалось взять заявку');
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : 'Ошибка');
       } finally {
         setAssigningId(null);
       }

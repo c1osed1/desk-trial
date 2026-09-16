@@ -12,18 +12,20 @@ const STATUS_CODES: Record<string, number> = {
 
 export async function registerTicketHandlers(app: FastifyInstance, service: TicketService): Promise<void> {
   app.setNotFoundHandler((_request, reply) => {
-    return reply.status(404).send({ code: 'not_found', message: 'Route not found' });
+    return reply.status(404).send({ error: { code: 'not_found', message: 'Route not found' } });
   });
 
   app.setErrorHandler((error: FastifyError, _request, reply) => {
     if (error instanceof AppError) {
-      return reply.status(STATUS_CODES[error.code] ?? 500).send({ code: error.code, message: error.message });
+      return reply.status(STATUS_CODES[error.code] ?? 500).send({ error: { code: error.code, message: error.message } });
     }
     const status = typeof error?.statusCode === 'number' ? error.statusCode : 500;
     if (status >= 400 && status < 500) {
-      return reply.status(status).send({ code: status === 404 ? 'not_found' : 'validation', message: 'Bad request' });
+      return reply.status(status).send({
+        error: { code: status === 404 ? 'not_found' : 'validation', message: 'Bad request' },
+      });
     }
-    return reply.status(500).send({ code: 'internal', message: 'Internal server error' });
+    return reply.status(500).send({ error: { code: 'internal', message: 'Internal server error' } });
   });
 
   app.post('/tickets', async (request, reply) => {

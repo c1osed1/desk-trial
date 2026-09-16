@@ -39,7 +39,7 @@ export function TicketQueue({ api }: { api: TicketApi }): ReactElement {
       </div>
       {queue.actionError != null && <p role="alert">{queue.actionError}</p>}
       {queue.visibleTickets.length === 0 ? (
-        <div>Нет заявок</div>
+        <div>Заявок нет</div>
       ) : (
         <ul>
           {queue.visibleTickets.map((ticket) => (
