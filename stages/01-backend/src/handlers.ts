@@ -11,9 +11,17 @@ const STATUS_CODES: Record<string, number> = {
 };
 
 export async function registerTicketHandlers(app: FastifyInstance, service: TicketService): Promise<void> {
+  app.setNotFoundHandler((_request, reply) => {
+    return reply.status(404).send({ code: 'not_found', message: 'Route not found' });
+  });
+
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof AppError) {
       return reply.status(STATUS_CODES[error.code] ?? 500).send({ code: error.code, message: error.message });
+    }
+    const status = typeof error?.statusCode === 'number' ? error.statusCode : 500;
+    if (status >= 400 && status < 500) {
+      return reply.status(status).send({ code: status === 404 ? 'not_found' : 'validation', message: 'Bad request' });
     }
     return reply.status(500).send({ code: 'internal', message: 'Internal server error' });
   });
@@ -56,6 +64,12 @@ export async function registerTicketHandlers(app: FastifyInstance, service: Tick
       filter = parsed.data;
     }
     const tickets = await service.list(filter);
-    return reply.send(tickets);
+    return reply.send({ tickets });
+  });
+
+  app.get('/tickets/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const ticket = await service.getById(id);
+    return reply.send(ticket);
   });
 }

@@ -6,8 +6,12 @@ import type { Ticket, TicketRepo, TicketStatus } from './types.ts';
 export class TicketService {
   constructor(private readonly repo: TicketRepo) {}
 
-  async create(input: unknown): Promise<Ticket> {
+async create(input: unknown): Promise<Ticket> {
     const data = input as { clubId: string; type: string; priority?: number; comment?: string };
+
+    const rawComment = data.comment ?? null;
+    const comment =
+      typeof rawComment === 'string' && rawComment.trim() !== '' ? rawComment.trim() : null;
 
     const ticket: Ticket = {
       id: randomUUID(),
@@ -16,7 +20,7 @@ export class TicketService {
       status: 'open',
       priority: (data.priority ?? 2) as 1 | 2 | 3,
       assigneeId: null,
-      comment: data.comment ?? null, //23131313
+      comment,
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
@@ -47,6 +51,7 @@ export class TicketService {
 
     return this.repo.update(ticketId, {
       status: 'done',
+      assigneeId: null,
       updatedAt: nowIso(),
     }) as Promise<Ticket>;
   }
@@ -58,8 +63,15 @@ export class TicketService {
 
     return this.repo.update(ticketId, {
       status: 'cancelled',
+      assigneeId: null,
       updatedAt: nowIso(),
     }) as Promise<Ticket>;
+  }
+
+  async getById(ticketId: string): Promise<Ticket> {
+    const ticket = await this.repo.getById(ticketId);
+    if (!ticket) throw new AppError('not_found', 'Ticket not found');
+    return ticket;
   }
 
   async list(status?: TicketStatus): Promise<Ticket[]> {
