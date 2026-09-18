@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { createTicketSchema } from './schema.ts';
-import { createMemoryRepo, nowIso } from './memoryRepo.ts';
+import { nowIso } from './memoryRepo.ts';
 import { AppError } from './errors.ts';
 import type { Ticket, TicketRepo, TicketStatus } from './types.ts';
 
