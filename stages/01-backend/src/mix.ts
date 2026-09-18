@@ -6,6 +6,13 @@ export function mixSignals(a: number[][], b: number[][]): number[][] {
   const bRows = b.length;
   const bCols = b[0]?.length ?? 0;
 
+  for (const row of a) {
+    if (row.length !== aCols) throw new AppError('validation', 'Matrix dimensions mismatch');
+  }
+  for (const row of b) {
+    if (row.length !== bCols) throw new AppError('validation', 'Matrix dimensions mismatch');
+  }
+
   if (aCols !== bRows) throw new AppError('validation', 'Matrix dimensions mismatch');
 
   const result: number[][] = new Array(aRows);
